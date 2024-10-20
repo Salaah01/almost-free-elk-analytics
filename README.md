@@ -55,8 +55,7 @@ flowchart LR
 * This setup only works for Nginx logs.
 * The setup only works for logs that are stored in a file.
 * The setup only works for logs that are stored in an S3 bucket.
-* The setup only works for logs that are stored in a specific format. The format is `logstash-nginx-log-format` which is the default format for Nginx logs.
-
+* The setup only works for logs that are stored in a specific format (the default Nginx log format).
 
 ## Setup
 
