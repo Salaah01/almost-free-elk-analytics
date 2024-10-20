@@ -1,8 +1,8 @@
 # Almost Free ELK Analytics
 
-This is a simple ELK stack setup that can be used to analyse logs from your remote server on your local machine. 
+This repository provides a simple, cost-effective ELK stack setup for analysing NGINX logs from a remote server on your local machine. By keeping everything local, there's no need for expensive third-party services or provisioning cloud servers to run ELK.
 
-At present, this only works for Nginx logs giving you the ability to analyse the logs in Kibana.
+At present, this setup only works with NGINX logs, giving you the ability to analyse and visualise them directly in Kibana.
 
 ## Contents
 - [Almost Free ELK Analytics](#almost-free-elk-analytics)
@@ -24,17 +24,18 @@ At present, this only works for Nginx logs giving you the ability to analyse the
 
 ## Why?
 
-I wanted to analyse my Nginx log and get an understanding of the traffic - specifically understand when things go wrong. I didn't want to pay for a third party service and nor did I want to deploy a full ELK stack on my server.
+I wanted to gain deeper insights into my NGINX logs to understand traffic patterns and identify errors, especially when things go wrong. However, I didn’t want to rely on expensive third-party log analysis services, nor did I want to deploy a full ELK stack on my server.
 
-Instead, I wanted a cost effective solution that I could run on my local machine and analyse the logs from my remote server.
+This project aims to provide a cost-effective solution for log analysis that runs entirely on your local machine, but processes logs from a remote server.
 
 ## How?
 
-My server produces Nginx logs and I use a cron job to copy the logs to an S3 bucket. Whenever I want to analyse the logs, I run a script that downloads the logs from S3 and processes them using Logstash (I could also use an cron job instead). The processed logs are then stored in Elasticsearch and visualised in Kibana.
+
+The server generates NGINX logs, which are periodically uploaded to an S3 bucket via a cron job. When you want to analyse these logs, a script is run locally to download the logs from S3 and process them using Logstash. The processed logs are then stored in Elasticsearch and visualized in Kibana.
+
 
 ```mermaid
 flowchart LR
-
     subgraph remote_server[Remote Server]
         nginx[Nginx] --> web_app[Web App]
         nginx --> remote_logs[Logs]
@@ -52,17 +53,17 @@ flowchart LR
 
 ## Limitations
 
-* This setup only works for Nginx logs.
-* The setup only works for logs that are stored in a file.
-* The setup only works for logs that are stored in an S3 bucket.
-* The setup only works for logs that are stored in a specific format (the default Nginx log format).
+Currently, this setup is designed to work only with NGINX logs.
+The logs must be stored as files on the remote server.
+Only logs stored in an S3 bucket are supported.
+The setup assumes the default NGINX log format, so any customisations may require changes to the Logstash configuration.
 
 ## Setup
 
 ### AWS
 
 1. Create an S3 bucket to store the logs.
-2. Ensure that your remote server has the necessary permissions to write to the S3 bucket. Below is an example an policy you can use:
+2. Configure the remote server with permissions to write to the S3 bucket. Example policy:
 
 ```json
 {
@@ -84,7 +85,7 @@ flowchart LR
 }
 ```
 
-3. Ensure that your local machine has the necessary permissions to read from the S3 bucket. Below is an example policy you can use:
+3. Grant your local machine the necessary permissions to read from the S3 bucket:
 
 ```json
 {
@@ -110,10 +111,10 @@ flowchart LR
 
 #### Prerequisites
 
-* Nginx - specifically, you need to have Nginx setup to log to a file.
-* AWS CLI
+* NGINX installed and configured to log to a file (default location is /var/log/nginx/access.log).
+* AWS CLI installed and configured for S3 access.
 
-1. Setup Nginx to log to a file. The default location is `/var/log/nginx/access.log`. If you change the location, you will need to update the `push_logs_to_s3.sh` script.
+1. Configure NGINX to log to a file. If the log location differs from the default, update the `push_logs_to_s3.sh` script accordingly.
 2. Copy the `push_logs_to_s3.sh` script to your remote server.
 3. Create a cron job to run the `push_logs_to_s3.sh` script. Below is an example cron job that runs every 3 hours:
 
@@ -136,25 +137,29 @@ flowchart LR
 0 */3 * * * /path/to/pull_logs_from_s3.sh <bucket_name>
 ```
 
-3. Run the following command to start the ELK stack:
+3. Start the ELK stack by running:
 
 ```bash
 docker-compose up
 ```
 4. Navigate to `http://localhost:5601` to access Kibana.
-5. Click on the `Discover` tab and create an index pattern. The index pattern should be `nginx-logs*`.
-6. You should now be able to visualise the logs in Kibana.
+5. Click on the `Discover` tab and create an index pattern. Use `nginx-logs*` as the index pattern.
+6. You should now be able to visualise the NGINX logs in Kibana.
 
 ## Adhoc Runs
 
-If you want adhoc runs, you can execute the `push_logs_to_s3.sh` in your remote server and `pull_logs_from_s3.sh` in your local machine.
+To run the process manually, you can execute the `push_logs_to_s3.sh` script on your remote server and the `pull_logs_from_s3.sh` script on your local machine.
 
 ## Further Development
 
-At the moment, this project is as-is. There are plenty of things that can be done to improve the project. For now, it serves my purpose and so I am likely to not make any further changes unless I need to.
+Currently, this project is a basic setup that meets my needs. Future enhancements could include:
 
-That said, if you have any suggestions or improvements, feel free to create an issue or a pull request. I will be more than happy to review them.
+* Supporting logs from other web servers beyond NGINX.
+* Adding support for additional log storage formats (besides S3).
+* Further automation of the log processing pipeline.
+
+If you have ideas or suggestions, feel free to submit a pull request or open an issue. Contributions are welcome!
 
 ## Issues
 
-If you encounter any issues, please create an issue and I will try to help you as best as I can. Bare in mind, this is a simple setup that I've knocked up in a few hours. It is not production ready and nor is it intended to be.
+If you encounter any problems, please create an issue. This setup is a quick solution I developed over a few hours, so it may not be production-ready. I'll do my best to help, but bear in mind it's not designed for large-scale production environments.
